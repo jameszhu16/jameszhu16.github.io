@@ -54,7 +54,7 @@ def logo_img(org, up):
 # Cloudflare Web Analytics. Empty token emits nothing, so the site keeps its
 # zero-external-request property until one is supplied — same contract as
 # logo_img(): no asset, no markup, never a broken reference.
-CF_BEACON_TOKEN = ""
+CF_BEACON_TOKEN = "7a365c5d4c774a3fa937ffdee6c04279"
 
 
 def analytics():
