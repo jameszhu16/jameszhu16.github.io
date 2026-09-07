@@ -51,6 +51,25 @@ def logo_img(org, up):
     return ""
 
 
+# Cloudflare Web Analytics. Empty token emits nothing, so the site keeps its
+# zero-external-request property until one is supplied — same contract as
+# logo_img(): no asset, no markup, never a broken reference.
+CF_BEACON_TOKEN = ""
+
+
+def analytics():
+    """The Cloudflare beacon, or "" when no token is configured.
+
+    Deferred and last in the body: if the script is blocked — an ad blocker,
+    a network that cannot reach Cloudflare — the page has already rendered and
+    nothing on it depends on the beacon.
+    """
+    if not CF_BEACON_TOKEN:
+        return ""
+    return ('\n<script defer src="https://static.cloudflareinsights.com/beacon.min.js"'
+            f' data-cf-beacon=\'{{"token": "{CF_BEACON_TOKEN}"}}\'></script>')
+
+
 NAV = {
     "zh": {"index": "首页", "about": "关于", "skills": "技能",
            "work": "案例", "experience": "经历", "milo": "Milo", "contact": "联系"},
@@ -142,7 +161,7 @@ def shell(lang, page, title, desc, body, extra_script=None):
   <p>&copy; <span id="year"></span> James Zhu · 朱晋辰</p>
 </footer>
 
-<script src="{up}{rev('js/main.js')}"></script>{extra}
+<script src="{up}{rev('js/main.js')}"></script>{extra}{analytics()}
 </body>
 </html>
 """
@@ -679,7 +698,7 @@ def build_404():
   <p>&copy; <span id="year"></span> James Zhu · 朱晋辰</p>
 </footer>
 
-<script src="/{rev('js/main.js')}"></script>
+<script src="/{rev('js/main.js')}"></script>{analytics()}
 </body>
 </html>
 """
