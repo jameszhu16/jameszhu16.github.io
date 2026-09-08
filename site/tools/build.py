@@ -81,6 +81,19 @@ LANG_ARIA = {"zh": "Switch to English", "en": "切换到中文"}
 NEXT_LABEL = {"zh": "下一页", "en": "Next"}
 
 
+# The scroll fade-in hides content until JavaScript reveals it, so the hiding
+# itself has to be conditional on JavaScript being there. This marks the page
+# while it is still parsing (before anything paints, so no flash), and takes the
+# mark back off if js/main.js never announces itself — a blocked or failed
+# script fetch then costs the animation, not the text.
+JS_FLAG = """<script>
+(function (h) {
+  h.classList.add("js");
+  setTimeout(function () { if (!window.__reveal) h.classList.remove("js"); }, 2500);
+})(document.documentElement);
+</script>"""
+
+
 def head(lang, page, title, desc):
     up = "../" if lang == "en" else ""
     zh = f"{BASE_URL}/{'' if page == 'index' else page + '.html'}"
@@ -89,6 +102,7 @@ def head(lang, page, title, desc):
     return f"""<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{title}</title>
+{JS_FLAG}
 <meta name="description" content="{desc}">
 <link rel="canonical" href="{here}">
 <link rel="alternate" hreflang="zh-CN" href="{zh}">
