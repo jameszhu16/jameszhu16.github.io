@@ -250,7 +250,7 @@ img { max-width: 100%; }
   padding: clamp(38px, 5vw, 56px) var(--pad) clamp(70px, 9vw, 110px);
 }
 
-/* Stat strip + roster -------------------------------------------------- */
+/* Stat strip -------------------------------------------------- */
 .strip {
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
@@ -317,36 +317,19 @@ img { max-width: 100%; }
   border: 0;
 }
 
-.roster {
-  padding: 30px 0;
-  border-bottom: 1px solid var(--line);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 24px;
-  align-items: baseline;
-}
-
-.roster em {
-  font-style: normal;
-  font-size: 0.7rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--dim);
-  margin-right: 12px;
-}
-
-.roster b { font-weight: 400; font-size: 1rem; letter-spacing: 0.04em; }
-
 /* Logo marquee --------------------------------------------------------- */
 .marquee { padding: 26px 0 30px; }
 
 /* The mask belongs on the moving strip, not on the whole band: applied higher
    up it also fades the label, which sits right where the left edge fades out. */
-.marquee__viewport {
-  overflow: hidden;
-  /* Fade the marks out at both edges instead of chopping them mid-letter.
-     Safari needs the prefixed property; without either the logos hard-cut,
-     which is plainer but not broken. */
+.marquee__viewport { overflow: hidden; }
+
+/* Fade the row out at both edges instead of chopping it mid-letter — but only
+   while it is rolling. On the static wrapped row nothing runs off the edge, and
+   the fade would just dim the first character of every line. Safari needs the
+   prefixed property; without either the row hard-cuts, which is plainer but
+   not broken. */
+.marquee.is-rolling .marquee__viewport {
   -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
   mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
 }
@@ -362,25 +345,61 @@ img { max-width: 100%; }
   margin-bottom: 18px;
 }
 
+/* Standing still the row wraps like ordinary content. It has to: the viewport
+   clips, so a single non-wrapping line would put the tail of the list past the
+   right edge with no way to ever reach it — which is exactly what a visitor
+   with scripts off or reduce motion on gets. Only once js/marquee.js has
+   cloned enough copies to loop does it become one long line. */
 .marquee__track {
   display: flex;
-  gap: 60px;
-  width: max-content;
+  flex-wrap: wrap;
+  gap: 18px 60px;
 }
 
-/* Runs only once js/marquee.js has cloned enough copies to loop; until then
-   the single row simply sits there. */
 .marquee.is-rolling .marquee__track {
+  flex-wrap: nowrap;
+  width: max-content;
   animation: marquee-roll linear infinite;
+}
+
+/* Same keyframes, played backwards: the two bands drift against each other. */
+.marquee[data-marquee="reverse"].is-rolling .marquee__track {
+  animation-direction: reverse;
 }
 
 .marquee:hover .marquee__track { animation-play-state: paused; }
 
 .marquee__group {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 60px;
+  gap: 18px 60px;
+}
+
+.marquee.is-rolling .marquee__group {
+  flex-wrap: nowrap;
   flex: 0 0 auto;      /* never squeezed: a shrunk group mismeasures the loop */
+}
+
+.marquee__name {
+  font-size: 1rem;
+  letter-spacing: 0.04em;
+}
+
+/* Only while rolling: a name must not break across the moving line. Standing
+   still it has to be free to wrap, or a name longer than a phone is wide —
+   谢伊·吉尔杰斯-亚历山大 / Shai Gilgeous-Alexander is 436px — runs off the edge
+   of a viewport that clips. */
+.marquee.is-rolling .marquee__name { white-space: nowrap; }
+
+/* The separator is drawn, not written: keeping it out of the text means a
+   screen reader never reads it out. It also only belongs on the single rolling
+   line — in the wrapped row it lands at the start of each new line and indents
+   every name, and names stacked one per line need no separator anyway. */
+.marquee.is-rolling .marquee__name + .marquee__name::before {
+  content: "·";
+  color: var(--dim);
+  margin-right: 60px;
 }
 
 /* Capped on both axes, and tighter on width than the timeline uses: in a row

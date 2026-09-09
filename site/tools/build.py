@@ -207,30 +207,48 @@ MARQUEE_ORGS = ["CAA China", "East Goes Global", "Wasserman Media Group",
                 "Sports, Sponsorships and Events Consulting", "ONE Championship"]
 
 
-def logo_marquee(lang, up):
-    """One plain row of company marks; js/marquee.js clones it into a loop.
+def marquee(label, items, reverse=False):
+    """One plain row that wraps; js/marquee.js clones it into a rolling loop.
 
-    Emitting a single row means scripts off, a failed script fetch and reduce
-    motion all land on something finished rather than on a fallback.
+    Emitting a single wrapping row means scripts off, a failed script fetch and
+    reduce motion all land on something finished and readable rather than on a
+    fallback — a non-wrapping row would be clipped by the viewport and the tail
+    of the list would be unreachable on a phone.
     """
-    marks = "\n".join(
-        f"        {logo_img(org, up, 'marquee__logo').strip()}"
-        for org in MARQUEE_ORGS if logo_img(org, up)
-    )
-    if not marks:
+    body = "\n".join(f"            {item}" for item in items if item)
+    if not body:
         return ""
+    rev = ' data-marquee="reverse"' if reverse else " data-marquee"
     return f"""  <div class="wrap">
-    <div class="marquee reveal" data-marquee>
-      <em>{MARQUEE_LABEL[lang]}</em>
+    <div class="marquee reveal"{rev}>
+      <em>{label}</em>
       <div class="marquee__viewport">
         <div class="marquee__track">
           <div class="marquee__group">
-{marks}
+{body}
           </div>
         </div>
       </div>
     </div>
   </div>"""
+
+
+def logo_marquee(lang, up):
+    return marquee(
+        MARQUEE_LABEL[lang],
+        [logo_img(org, up, "marquee__logo").strip() for org in MARQUEE_ORGS],
+    )
+
+
+def roster_marquee(lang, names):
+    """The athletes. The separating middot is drawn by CSS rather than written
+    into the text: a screen reader should not read it out, and a wrapped row
+    should not end a line on a lone dot."""
+    return marquee(
+        C[lang]["index"]["roster_label"],
+        [f'<span class="marquee__name">{n}</span>' for n in names],
+        reverse=True,
+    )
 
 
 def stats_strip(items):
@@ -500,7 +518,6 @@ def build_index(lang):
     links = "\n".join(f'          <a href="{t}.html">{label} <i>→</i></a>'
                       for t, label in c["links"])
     names = ROSTER if lang == "zh" else ROSTER_EN
-    roster = "\n".join(f"    <b>{n}</b>" for n in names)
     say = c["pet_say"]
     body = f"""  <div class="wrap">
     <div class="hero">
@@ -526,12 +543,7 @@ def build_index(lang):
 
 {stats_strip(c['stats'])}
 
-  <div class="wrap">
-    <div class="roster reveal">
-    <em>{c['roster_label']}</em>
-{roster}
-    </div>
-  </div>
+{roster_marquee(lang, names)}
 
 {logo_marquee(lang, up)}"""
     return shell(lang, "index", c["title"], c["desc"], body,
