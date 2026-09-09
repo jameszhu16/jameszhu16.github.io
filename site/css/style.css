@@ -322,14 +322,17 @@ img { max-width: 100%; }
 
 /* The mask belongs on the moving strip, not on the whole band: applied higher
    up it also fades the label, which sits right where the left edge fades out. */
-.marquee__viewport { overflow: hidden; }
+/* A band is a label over one or more rows; each row rolls on its own. */
+.marquee__row { overflow: hidden; }
+
+.marquee__row + .marquee__row { margin-top: 14px; }
 
 /* Fade the row out at both edges instead of chopping it mid-letter — but only
    while it is rolling. On the static wrapped row nothing runs off the edge, and
    the fade would just dim the first character of every line. Safari needs the
    prefixed property; without either the row hard-cuts, which is plainer but
    not broken. */
-.marquee.is-rolling .marquee__viewport {
+.marquee__row.is-rolling {
   -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
   mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
 }
@@ -356,14 +359,15 @@ img { max-width: 100%; }
   gap: 18px 60px;
 }
 
-.marquee.is-rolling .marquee__track {
+.marquee__row.is-rolling .marquee__track {
   flex-wrap: nowrap;
   width: max-content;
   animation: marquee-roll linear infinite;
 }
 
-/* Same keyframes, played backwards: the two bands drift against each other. */
-.marquee[data-marquee="reverse"].is-rolling .marquee__track {
+/* Same keyframes, played backwards. Directions alternate down the page, so no
+   two neighbouring rows ever drift the same way. */
+.marquee__row[data-dir="reverse"].is-rolling .marquee__track {
   animation-direction: reverse;
 }
 
@@ -376,7 +380,7 @@ img { max-width: 100%; }
   gap: 18px 60px;
 }
 
-.marquee.is-rolling .marquee__group {
+.marquee__row.is-rolling .marquee__group {
   flex-wrap: nowrap;
   flex: 0 0 auto;      /* never squeezed: a shrunk group mismeasures the loop */
 }
@@ -390,13 +394,13 @@ img { max-width: 100%; }
    still it has to be free to wrap, or a name longer than a phone is wide —
    谢伊·吉尔杰斯-亚历山大 / Shai Gilgeous-Alexander is 436px — runs off the edge
    of a viewport that clips. */
-.marquee.is-rolling .marquee__name { white-space: nowrap; }
+.marquee__row.is-rolling .marquee__name { white-space: nowrap; }
 
 /* The separator is drawn, not written: keeping it out of the text means a
    screen reader never reads it out. It also only belongs on the single rolling
    line — in the wrapped row it lands at the start of each new line and indents
    every name, and names stacked one per line need no separator anyway. */
-.marquee.is-rolling .marquee__name + .marquee__name::before {
+.marquee__row.is-rolling .marquee__name + .marquee__name::before {
   content: "·";
   color: var(--dim);
   margin-right: 60px;
@@ -866,7 +870,7 @@ img { max-width: 100%; }
 
 @media (prefers-reduced-motion: reduce) {
   .js .reveal { opacity: 1; transform: none; transition: none; }
-  .marquee.is-rolling .marquee__track { animation: none; }
+  .marquee__row.is-rolling .marquee__track { animation: none; }
   * { scroll-behavior: auto; }
 }
 

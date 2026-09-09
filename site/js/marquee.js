@@ -1,8 +1,9 @@
 (() => {
   "use strict";
 
-  /* The bands that drift sideways on the home page: the athletes, and the
-     company marks below them running the other way.
+  /* The rows that drift sideways at the foot of the home page: the athletes
+     over two rows, and the company marks below them. Neighbouring rows run
+     opposite ways.
 
      Each ships as one plain row that wraps like ordinary content — complete and
      readable standing still. This clones that row until the track can loop
@@ -10,24 +11,25 @@
      moving. Scripts off, this file failing, or "reduce motion" all leave the
      wrapped row, which is a finished thing rather than a fallback. */
 
-  const bands = Array.from(document.querySelectorAll("[data-marquee]"));
-  if (!bands.length) return;
+  // Each row rolls on its own: the athletes are split over two so nine names
+  // do not take a minute to come round, and neighbouring rows run opposite ways.
+  const rows = Array.from(document.querySelectorAll(".marquee__row"));
+  if (!rows.length) return;
 
   // Reduce motion asks for less movement, not less content: the rows are
   // already there and already readable, so nothing needs to happen.
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-  const SPEED = 50;   // px per second — a drift, not a ticker
+  const SPEED = 65;   // px per second — a drift, not a ticker
 
-  function measure(band) {
-    const view = band.querySelector(".marquee__viewport");
-    const track = band.querySelector(".marquee__track");
-    const group = band.querySelector(".marquee__group");
-    if (!view || !track || !group) return;
+  function measure(row) {
+    const track = row.querySelector(".marquee__track");
+    const group = row.querySelector(".marquee__group");
+    if (!track || !group) return;
 
     // Measure on one unwrapped line — the width that matters is the width the
     // row will have once it is rolling, not the wrapped height it has now.
-    band.classList.add("is-rolling");
+    row.classList.add("is-rolling");
 
     // The gap belongs to the track, so a group's share of the loop is its own
     // width plus one gap; translating by exactly that puts the next copy where
@@ -35,15 +37,15 @@
     const gap = parseFloat(getComputedStyle(track).columnGap) || 0;
     const span = group.getBoundingClientRect().width + gap;
     if (!span) {
-      band.classList.remove("is-rolling");
+      row.classList.remove("is-rolling");
       return;
     }
 
     // Enough copies to cover the visible strip twice. That also covers the
     // worst case for either direction — the track has to outlast one full
-    // span plus a screenful — since copies * span >= 2 * view implies
-    // copies * span >= span + view whether span is the larger term or not.
-    const want = Math.max(2, Math.ceil((view.clientWidth * 2) / span));
+    // span plus a screenful — since copies * span >= 2 * row implies
+    // copies * span >= span + row whether span is the larger term or not.
+    const want = Math.max(2, Math.ceil((row.clientWidth * 2) / span));
     for (let i = track.children.length; i < want; i++) {
       const copy = group.cloneNode(true);
       // one voice, not five: a screen reader reads the original row only
@@ -56,20 +58,20 @@
     track.style.animationDuration = span / SPEED + "s";
   }
 
-  function start(band) {
-    measure(band);
+  function start(row) {
+    measure(row);
     // The row's width is not settled for good: the marks are lazy-loaded and
     // can arrive after this runs, and the window can be resized or turned.
     // Either changes what one loop is worth, and a stale figure makes the seam
     // jump, so re-derive it whenever the row actually changes size.
-    const group = band.querySelector(".marquee__group");
+    const group = row.querySelector(".marquee__group");
     if (group && "ResizeObserver" in window) {
       let last = Math.round(group.getBoundingClientRect().width);
       new ResizeObserver(() => {
         const now = Math.round(group.getBoundingClientRect().width);
         if (now && now !== last) {
           last = now;
-          measure(band);
+          measure(row);
         }
       }).observe(group);
     }
@@ -79,7 +81,7 @@
   // width, and below the fold on a phone that is the normal case at load. A
   // group measured then comes out short and the loop lands in the wrong place.
   function whenMarksReady(done) {
-    const imgs = bands.flatMap((b) => Array.from(b.querySelectorAll("img")));
+    const imgs = rows.flatMap((r) => Array.from(r.querySelectorAll("img")));
     const pending = imgs.filter((im) => !im.complete || !im.naturalWidth);
     if (!pending.length) return done();
     let left = pending.length;
@@ -98,7 +100,7 @@
     });
   }
 
-  const startAll = () => whenMarksReady(() => bands.forEach(start));
+  const startAll = () => whenMarksReady(() => rows.forEach(start));
 
   if (document.readyState === "complete") startAll();
   else window.addEventListener("load", startAll);

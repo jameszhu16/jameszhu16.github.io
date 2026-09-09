@@ -207,48 +207,61 @@ MARQUEE_ORGS = ["CAA China", "East Goes Global", "Wasserman Media Group",
                 "Sports, Sponsorships and Events Consulting", "ONE Championship"]
 
 
-def marquee(label, items, reverse=False):
-    """One plain row that wraps; js/marquee.js clones it into a rolling loop.
+def marquee(label, rows):
+    """One label over one or more rows that drift sideways; js/marquee.js clones
+    each row into a rolling loop.
 
-    Emitting a single wrapping row means scripts off, a failed script fetch and
-    reduce motion all land on something finished and readable rather than on a
-    fallback — a non-wrapping row would be clipped by the viewport and the tail
-    of the list would be unreachable on a phone.
+    Every row is emitted as a plain row that wraps, which means scripts off, a
+    failed script fetch and reduce motion all land on something finished and
+    readable rather than on a fallback — a non-wrapping row would be clipped by
+    its own viewport and the tail of the list would be unreachable on a phone.
     """
-    body = "\n".join(f"            {item}" for item in items if item)
-    if not body:
-        return ""
-    rev = ' data-marquee="reverse"' if reverse else " data-marquee"
-    return f"""  <div class="wrap">
-    <div class="marquee reveal"{rev}>
-      <em>{label}</em>
-      <div class="marquee__viewport">
+    blocks = []
+    for items, reverse in rows:
+        body = "\n".join(f"            {item}" for item in items if item)
+        if not body:
+            continue
+        rev = ' data-dir="reverse"' if reverse else ""
+        blocks.append(f"""      <div class="marquee__row"{rev}>
         <div class="marquee__track">
           <div class="marquee__group">
 {body}
           </div>
         </div>
-      </div>
+      </div>""")
+    if not blocks:
+        return ""
+    return f"""  <div class="wrap">
+    <div class="marquee reveal" data-marquee>
+      <em>{label}</em>
+{chr(10).join(blocks)}
     </div>
   </div>"""
 
 
 def logo_marquee(lang, up):
-    return marquee(
-        MARQUEE_LABEL[lang],
-        [logo_img(org, up, "marquee__logo").strip() for org in MARQUEE_ORGS],
-    )
+    marks = [logo_img(org, up, "marquee__logo").strip() for org in MARQUEE_ORGS]
+    return marquee(MARQUEE_LABEL[lang], [(marks, False)])
 
 
 def roster_marquee(lang, names):
-    """The athletes. The separating middot is drawn by CSS rather than written
-    into the text: a screen reader should not read it out, and a wrapped row
-    should not end a line on a lone dot."""
-    return marquee(
-        C[lang]["index"]["roster_label"],
-        [f'<span class="marquee__name">{n}</span>' for n in names],
-        reverse=True,
-    )
+    """The athletes, over two rows.
+
+    Nine names on one line take a full minute to come round, which is too long
+    to wait to see who is on the list; two rows halve that and show twice as
+    many at once. Split in listed order rather than dealt out, so the biggest
+    names sit in the row that is read first.
+
+    The separating middot is drawn by CSS rather than written into the text: a
+    screen reader should not read it out, and a wrapped row should not end a
+    line on a lone dot.
+    """
+    tag = [f'<span class="marquee__name">{n}</span>' for n in names]
+    half = (len(tag) + 1) // 2
+    # directions alternate down the page, and the logo row below carries on the
+    # alternation, so no two neighbouring rows ever drift the same way
+    return marquee(C[lang]["index"]["roster_label"],
+                   [(tag[:half], False), (tag[half:], True)])
 
 
 def stats_strip(items):
