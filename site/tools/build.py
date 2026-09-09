@@ -153,9 +153,12 @@ def nav(lang, page):
 
 
 def shell(lang, page, title, desc, body, extra_script=None):
+    """extra_script takes one script name or several; the home page needs two."""
     up = "../" if lang == "en" else ""
-    extra = (f'\n<script src="{up}{rev("js/" + extra_script)}"></script>'
-             if extra_script else "")
+    names = [extra_script] if isinstance(extra_script, str) else (extra_script or [])
+    extra = "".join(
+        f'\n<script src="{up}{rev("js/" + name)}"></script>' for name in names
+    )
     return f"""<!DOCTYPE html>
 <html lang="{'zh-CN' if lang == 'zh' else 'en'}">
 <head>
@@ -493,7 +496,8 @@ def build_index(lang):
 {roster}
     </div>
   </div>"""
-    return shell(lang, "index", c["title"], c["desc"], body, extra_script="pet.js")
+    return shell(lang, "index", c["title"], c["desc"], body,
+                 extra_script=("pet.js", "stats.js"))
 
 
 def build_about(lang):

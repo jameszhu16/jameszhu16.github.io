@@ -276,13 +276,45 @@ img { max-width: 100%; }
 
 .stat:first-child b { color: var(--accent); }
 
-.stat span {
+/* Direct child only: this is the caption under the number, and a plain
+   `.stat span` would also catch the reel spans js/stats.js builds inside <b>
+   and lay them out as 0.7rem blocks. */
+.stat > span {
   display: block;
   margin-top: 9px;
   font-size: 0.7rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--dim);
+}
+
+/* Odometer reels, built and torn down by js/stats.js. They exist only while a
+   number is rolling, so nothing here applies to the page at rest. */
+.num__d {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+
+.num__col { display: block; }
+
+.num__col i {
+  display: block;
+  font-style: normal;
+  line-height: 1;
+}
+
+/* Reachable by a screen reader, invisible on screen. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .roster {
