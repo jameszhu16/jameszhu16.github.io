@@ -337,6 +337,66 @@ img { max-width: 100%; }
 
 .roster b { font-weight: 400; font-size: 1rem; letter-spacing: 0.04em; }
 
+/* Logo marquee --------------------------------------------------------- */
+.marquee { padding: 26px 0 30px; }
+
+/* The mask belongs on the moving strip, not on the whole band: applied higher
+   up it also fades the label, which sits right where the left edge fades out. */
+.marquee__viewport {
+  overflow: hidden;
+  /* Fade the marks out at both edges instead of chopping them mid-letter.
+     Safari needs the prefixed property; without either the logos hard-cut,
+     which is plainer but not broken. */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+}
+
+/* Direct child: `.marquee em` would also catch anything inside a mark. */
+.marquee > em {
+  display: block;
+  font-style: normal;
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 18px;
+}
+
+.marquee__track {
+  display: flex;
+  gap: 60px;
+  width: max-content;
+}
+
+/* Runs only once js/marquee.js has cloned enough copies to loop; until then
+   the single row simply sits there. */
+.marquee.is-rolling .marquee__track {
+  animation: marquee-roll linear infinite;
+}
+
+.marquee:hover .marquee__track { animation-play-state: paused; }
+
+.marquee__group {
+  display: flex;
+  align-items: center;
+  gap: 60px;
+  flex: 0 0 auto;      /* never squeezed: a shrunk group mismeasures the loop */
+}
+
+/* Capped on both axes, and tighter on width than the timeline uses: in a row
+   the marks are compared directly, so a wide wordmark left to run to 150px
+   dwarfs a round crest that can only ever be as wide as it is tall. */
+.marquee__logo {
+  max-height: 46px;
+  max-width: 116px;
+  width: auto;
+  opacity: 0.82;
+}
+
+@keyframes marquee-roll {
+  to { transform: translateX(calc(var(--marquee-span) * -1)); }
+}
+
 /* About ---------------------------------------------------------------- */
 .about {
   display: grid;
@@ -787,6 +847,7 @@ img { max-width: 100%; }
 
 @media (prefers-reduced-motion: reduce) {
   .js .reveal { opacity: 1; transform: none; transition: none; }
+  .marquee.is-rolling .marquee__track { animation: none; }
   * { scroll-behavior: auto; }
 }
 

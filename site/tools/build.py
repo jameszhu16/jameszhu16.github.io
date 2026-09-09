@@ -38,7 +38,7 @@ LOGO_STEM = {
 }
 
 
-def logo_img(org, up):
+def logo_img(org, up, cls="job__logo"):
     """An <img> for the company mark, or "" if that file has not been added."""
     name = org.split(" · ")[0]
     stem = next((v for k, v in LOGO_STEM.items() if name.startswith(k)), None)
@@ -46,7 +46,7 @@ def logo_img(org, up):
         return ""
     for ext in ("svg", "png", "webp", "jpg"):
         if (SITE / "assets" / "logos" / f"{stem}.{ext}").exists():
-            return (f'<img class="job__logo" src="{up}assets/logos/{stem}.{ext}"'
+            return (f'<img class="{cls}" src="{up}assets/logos/{stem}.{ext}"'
                     f' alt="{name}" loading="lazy">\n          ')
     return ""
 
@@ -195,6 +195,42 @@ def next_link(lang, target, label):
     return f"""    <div class="next reveal">
       <a href="{target}.html">{NEXT_LABEL[lang]} — {label} <i>→</i></a>
     </div>"""
+
+
+MARQUEE_LABEL = {"zh": "工作过", "en": "Worked at"}
+
+# The order the marks scroll past in. These are all employers (see the jobs
+# list), which is why the label says "worked at" and not "clients" — the home
+# page already carries a "worked with" line, and that one is the athletes.
+MARQUEE_ORGS = ["CAA China", "East Goes Global", "Wasserman Media Group",
+                "Los Angeles Sparks (WNBA)",
+                "Sports, Sponsorships and Events Consulting", "ONE Championship"]
+
+
+def logo_marquee(lang, up):
+    """One plain row of company marks; js/marquee.js clones it into a loop.
+
+    Emitting a single row means scripts off, a failed script fetch and reduce
+    motion all land on something finished rather than on a fallback.
+    """
+    marks = "\n".join(
+        f"        {logo_img(org, up, 'marquee__logo').strip()}"
+        for org in MARQUEE_ORGS if logo_img(org, up)
+    )
+    if not marks:
+        return ""
+    return f"""  <div class="wrap">
+    <div class="marquee reveal" data-marquee>
+      <em>{MARQUEE_LABEL[lang]}</em>
+      <div class="marquee__viewport">
+        <div class="marquee__track">
+          <div class="marquee__group">
+{marks}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>"""
 
 
 def stats_strip(items):
@@ -495,9 +531,11 @@ def build_index(lang):
     <em>{c['roster_label']}</em>
 {roster}
     </div>
-  </div>"""
+  </div>
+
+{logo_marquee(lang, up)}"""
     return shell(lang, "index", c["title"], c["desc"], body,
-                 extra_script=("pet.js", "stats.js"))
+                 extra_script=("pet.js", "stats.js", "marquee.js"))
 
 
 def build_about(lang):
